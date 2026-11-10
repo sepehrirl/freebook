@@ -24,6 +24,8 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
 2. The database migrations are in `supabase/migrations/` and are applied in order:
    - `001_initial_schema.sql`
    - `002_security_hardening.sql`
+   - `20261110175008_freebook_phase1_least_privilege.sql`
+   - `20261110175133_phase1_policy_and_fk_indexes.sql`
 3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
 4. Configure Supabase Auth site URL and redirect allowlist for the deployed GitHub Pages URL.
 5. Configure email confirmation and production SMTP before launch.
