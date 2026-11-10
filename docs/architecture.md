@@ -42,5 +42,8 @@ GitHub Pages serves static assets only. Supabase provides identity and database 
 2. RLS checks `auth.uid()` on every read/write.
 3. Changing browser requests cannot grant access to another user's rows.
 
+## Phase 4: automated ingestion
+Supabase Cron invokes the private `ingest-books` Edge Function daily. The function validates a Vault-backed token, reads only enabled curated source manifests, and imports only explicitly rights-verified CC0 / CC BY / CC BY-SA records. It downloads PDF or UTF-8 TXT files, checks host allowlists, size, MIME/signature, hashes, and duplicate identity, then uploads to the private Storage bucket and publishes the matching catalogue row. Browser roles cannot manage source feeds or invoke ingestion. Admins can read run summaries only.
+
 ## Scaling path
-For higher traffic, add a dedicated API for catalogue search and ingestion, object storage/CDN for book files, connection pooling, observability, tested backups, and a moderation workflow. Preserve RLS when adding services.
+Add observability, tested backups, a source review workflow, and a browser-based reader integration test suite. Preserve RLS and server-side secrets.

@@ -9,8 +9,7 @@ const supabase = configured ? createClient(config.supabaseUrl, config.supabaseAn
 
 const $ = (selector) => document.querySelector(selector);
 const STORAGE_BUCKET = "freebook-books";
-const MAX_BOOK_FILE_SIZE = 50 * 1024 * 1024;
-const state = { session: null, profile: null, books: [], bookmarks: new Set(), category: "all", query: "", authMode: "login", activeBook: null, adminBooks: [], editingBookId: null, pdfDocument: null, pdfPage: 1, readerProgress: null, progressSaveTimer: null, readerLoadToken: 0 };
+const state = { session: null, profile: null, books: [], bookmarks: new Set(), category: "all", query: "", authMode: "login", activeBook: null, adminBooks: [], pdfDocument: null, pdfPage: 1, readerProgress: null, progressSaveTimer: null, readerLoadToken: 0 };
 const categories = ["همه", "ادبیات", "داستان", "دانش", "شعر", "تاریخ", "علمی"];
 
 function escapeHtml(value = "") {
@@ -339,15 +338,13 @@ function adminStatusLabel(status) {
 function renderAdminBooks() {
   const target = $("#adminBookList");
   if (!state.adminBooks.length) {
-    target.innerHTML = '<p class="muted">هنوز کتابی ثبت نشده است. اولین کتاب را از فرم کناری اضافه کن.</p>';
+    target.innerHTML = '<p class="muted">هنوز کتابی در فهرست نیست؛ کتاب‌ها پس از ورود خودکار نمایش داده می‌شوند.</p>';
     return;
   }
   target.innerHTML = state.adminBooks.map((book) =>
-    '<article class="admin-book-row">' +
-      '<div class="admin-book-copy"><strong>' + escapeHtml(book.title) + '</strong>' +
-      '<span class="muted">' + escapeHtml(book.author) + ' · ' + adminStatusLabel(book.publication_status) + '</span></div>' +
-      '<button class="button button-quiet" type="button" data-edit-book="' + escapeHtml(book.id) + '">ویرایش</button>' +
-    '</article>'
+    '<article class="admin-book-row"><div class="admin-book-copy"><strong>' + escapeHtml(book.title) + '</strong>' +
+    '<span class="muted">' + escapeHtml(book.author) + ' · ' + adminStatusLabel(book.publication_status) +
+    ' · ' + (book.ingestion_source_key ? 'ورود خودکار' : 'ثبت پیشین') + '</span></div></article>'
   ).join("");
 }
 async function loadAdminBooks() {
@@ -355,8 +352,8 @@ async function loadAdminBooks() {
   const target = $("#adminBookList");
   target.innerHTML = '<p class="muted">در حال دریافت فهرست کتاب‌ها…</p>';
   const { data, error } = await supabase.from("books")
-    .select("id,slug,title,author,description,category,cover_url,content_url,content_path,content_mime_type,content_size_bytes,license_name,license_url,source_url,attribution,publication_status,published_at,updated_at")
-    .order("updated_at", { ascending: false });
+    .select("id,title,author,publication_status,updated_at,ingestion_source_key")
+    .order("updated_at", { ascending: false }).limit(50);
   if (error) {
     target.innerHTML = '<p class="form-message">دریافت کتاب‌ها انجام نشد. سطح دسترسی مدیر را بررسی کن.</p>';
     console.error("FreeBook admin books:", error);
@@ -365,144 +362,38 @@ async function loadAdminBooks() {
   state.adminBooks = data || [];
   renderAdminBooks();
 }
-function resetAdminForm() {
-  state.editingBookId = null;
-  $("#bookAdminForm").reset();
-  $("#adminBookId").value = "";
-  $("#bookFileStatus").textContent = "فقط PDF یا TXT، حداکثر ۵۰ مگابایت";
-  $("#adminFormTitle").textContent = "افزودن کتاب تازه";
-  $("#adminSaveButton").textContent = "ذخیره کتاب";
-  showMessage($("#adminMessage"), "فایل را مستقیم و امن در فضای ذخیره‌سازی FreeBook بارگذاری کن.");
-}
-function fillAdminForm(book) {
-  state.editingBookId = book.id;
-  $("#adminBookId").value = book.id;
-  $("#bookSlug").value = book.slug || "";
-  $("#bookTitle").value = book.title || "";
-  $("#bookAuthor").value = book.author || "";
-  $("#bookCategory").value = book.category || "ادبیات";
-  $("#bookDescription").value = book.description || "";
-  $("#bookCoverUrl").value = book.cover_url || "";
-  $("#bookContentUrl").value = book.content_url || "";
-  $("#bookLicense").value = book.license_name || "";
-  $("#bookLicenseUrl").value = book.license_url || "";
-  $("#bookSourceUrl").value = book.source_url || "";
-  $("#bookAttribution").value = book.attribution || "";
-  $("#bookFileStatus").textContent = book.content_path ? "فایل فعلی: " + book.content_path : "هنوز فایلی بارگذاری نشده است."; 
-  $("#bookStatus").value = book.publication_status || "draft";
-  $("#adminFormTitle").textContent = "ویرایش کتاب";
-  $("#adminSaveButton").textContent = "ذخیره تغییرات";
-  showMessage($("#adminMessage"), "وضعیت فعلی: " + adminStatusLabel(book.publication_status));
-  $("#bookTitle").focus();
+async function loadIngestionRuns() {
+  const status = $("#ingestionStatus");
+  const target = $("#ingestionRuns");
+  status.textContent = "موتور دریافت خودکار فعال است؛ برای واردشدن کتاب‌ها باید حداقل یک منبع دارای مجوز تأیید و فعال شود.";
+  const { data, error } = await supabase.from("book_ingestion_runs")
+    .select("id,source_key,status,discovered_count,imported_count,skipped_count,error_count,started_at,finished_at")
+    .order("started_at", { ascending: false }).limit(8);
+  if (error) {
+    target.innerHTML = '<p class="form-message">دریافت گزارش اجراها ممکن نشد.</p>';
+    console.error("FreeBook ingestion runs:", error);
+    return;
+  }
+  if (!data?.length) {
+    target.innerHTML = '<p class="muted">هنوز اجرای منبعی ثبت نشده است؛ فعلاً هیچ منبع تأییدشده‌ای فعال نیست.</p>';
+    return;
+  }
+  target.innerHTML = data.map((run) => {
+    const date = new Date(run.started_at).toLocaleString("fa-IR");
+    const label = run.status === "completed" ? "موفق" : run.status === "partial" ? "نیمه‌کامل" : run.status === "failed" ? "ناموفق" : run.status;
+    return '<article class="admin-book-row"><div class="admin-book-copy"><strong>' +
+      escapeHtml(run.source_key || "منبع") + ' · ' + label + '</strong><span class="muted">' +
+      'کشف ' + run.discovered_count + ' · واردشده ' + run.imported_count + ' · ردشده ' + run.skipped_count +
+      ' · خطا ' + run.error_count + ' · ' + escapeHtml(date) + '</span></div></article>';
+  }).join("");
 }
 async function openAdminPanel() {
   if (!state.session || state.profile?.role !== "admin") {
     toast("دسترسی این بخش فقط برای مدیران فعال است.");
     return;
   }
-  resetAdminForm();
   $("#adminDialog").showModal();
-  await loadAdminBooks();
-}
-async function saveAdminBook(event) {
-  event.preventDefault();
-  if (!state.session || state.profile?.role !== "admin") {
-    return showMessage($("#adminMessage"), "اجازه انجام این عملیات را نداری.", true);
-  }
-  const value = (id) => $("#" + id).value.trim();
-  const file = $("#bookFile").files?.[0] || null;
-  const title = value("bookTitle");
-  const author = value("bookAuthor");
-  const sourceUrl = safeHttpsUrl(value("bookSourceUrl"));
-  const licenseUrlValue = value("bookLicenseUrl");
-  const coverUrlValue = value("bookCoverUrl");
-  const contentUrlValue = value("bookContentUrl");
-  const licenseUrl = licenseUrlValue ? safeHttpsUrl(licenseUrlValue) : null;
-  const coverUrl = coverUrlValue ? safeHttpsUrl(coverUrlValue) : null;
-  const contentUrl = contentUrlValue ? safeHttpsUrl(contentUrlValue) : null;
-  const desiredStatus = value("bookStatus");
-  const existing = state.adminBooks.find((book) => book.id === state.editingBookId);
-  if (!title || !author) return showMessage($("#adminMessage"), "عنوان و نام نویسنده را کامل وارد کن.", true);
-  if (!sourceUrl) return showMessage($("#adminMessage"), "نشانی منبع باید یک لینک معتبر HTTPS باشد.", true);
-  if (licenseUrlValue && !licenseUrl) return showMessage($("#adminMessage"), "لینک مجوز باید HTTPS باشد.", true);
-  if (coverUrlValue && !coverUrl) return showMessage($("#adminMessage"), "لینک جلد باید HTTPS باشد.", true);
-  if (contentUrlValue && !contentUrl) return showMessage($("#adminMessage"), "لینک فایل کتاب باید HTTPS باشد.", true);
-  if (file) {
-    const allowed = file.type === "application/pdf" || file.type === "text/plain" || /\.(pdf|txt)$/i.test(file.name);
-    if (!allowed) return showMessage($("#adminMessage"), "فقط فایل PDF یا TXT مجاز است.", true);
-    if (file.size > MAX_BOOK_FILE_SIZE) return showMessage($("#adminMessage"), "حجم فایل نباید بیشتر از ۵۰ مگابایت باشد.", true);
-  }
-  if (desiredStatus === "published" && !file && !existing?.content_path && !contentUrl) {
-    return showMessage($("#adminMessage"), "برای انتشار، فایل PDF/TXT یا لینک HTTPS کتاب را وارد کن.", true);
-  }
-  if (!value("bookLicense") || !value("bookAttribution")) {
-    return showMessage($("#adminMessage"), "نام مجوز و اطلاعات انتساب اثر الزامی است.", true);
-  }
-  const payload = {
-    slug: value("bookSlug") || (existing?.slug || ("book-" + crypto.randomUUID())),
-    title,
-    author,
-    category: value("bookCategory"),
-    description: value("bookDescription"),
-    cover_url: coverUrl,
-    content_url: file ? null : contentUrl,
-    content_path: existing?.content_path || null,
-    content_mime_type: existing?.content_mime_type || null,
-    content_size_bytes: existing?.content_size_bytes || null,
-    license_name: value("bookLicense"),
-    license_url: licenseUrl,
-    source_url: sourceUrl,
-    attribution: value("bookAttribution"),
-    publication_status: desiredStatus,
-    published_at: desiredStatus === "published" ? (existing?.published_at || new Date().toISOString()) : null
-  };
-  const button = $("#adminSaveButton");
-  button.disabled = true;
-  let bookId = state.editingBookId;
-  let uploadedPath = null;
-  try {
-    showMessage($("#adminMessage"), "در حال ذخیره اطلاعات کتاب…");
-    if (!bookId) {
-      const insertPayload = { ...payload, publication_status: file ? "draft" : desiredStatus, published_at: file ? null : payload.published_at };
-      const { data, error } = await supabase.from("books").insert(insertPayload).select("id").single();
-      if (error) throw error;
-      bookId = data.id;
-    }
-    if (file) {
-      const extension = file.type === "application/pdf" || /\.pdf$/i.test(file.name) ? "pdf" : "txt";
-      uploadedPath = bookId + "/" + crypto.randomUUID() + "." + extension;
-      showMessage($("#adminMessage"), "در حال بارگذاری فایل در فضای امن…");
-      const { error: uploadError } = await supabase.storage.from(STORAGE_BUCKET).upload(uploadedPath, file, {
-        cacheControl: "3600",
-        contentType: extension === "pdf" ? "application/pdf" : "text/plain",
-        upsert: false
-      });
-      if (uploadError) throw uploadError;
-      payload.content_path = uploadedPath;
-      payload.content_mime_type = extension === "pdf" ? "application/pdf" : "text/plain";
-      payload.content_size_bytes = file.size;
-    }
-    if (state.editingBookId || file) {
-      const { error } = await supabase.from("books").update(payload).eq("id", bookId);
-      if (error) throw error;
-    }
-    if (existing?.content_path && uploadedPath && existing.content_path !== uploadedPath) {
-      const { error: removeError } = await supabase.storage.from(STORAGE_BUCKET).remove([existing.content_path]);
-      if (removeError) console.warn("Old book file cleanup failed:", removeError);
-    }
-    toast(desiredStatus === "published" ? "کتاب منتشر شد." : desiredStatus === "archived" ? "کتاب بایگانی شد." : "کتاب ذخیره شد.");
-    resetAdminForm();
-    await Promise.all([loadAdminBooks(), loadBooks()]);
-  } catch (error) {
-    if (uploadedPath) {
-      const { error: cleanupError } = await supabase.storage.from(STORAGE_BUCKET).remove([uploadedPath]);
-      if (cleanupError) console.warn("Uploaded file cleanup failed:", cleanupError);
-    }
-    console.error("FreeBook save book:", error);
-    showMessage($("#adminMessage"), error.message || "ذخیره کتاب انجام نشد. دسترسی مدیر و فضای ذخیره‌سازی را بررسی کن.", true);
-  } finally {
-    button.disabled = false;
-  }
+  await Promise.all([loadAdminBooks(), loadIngestionRuns()]);
 }
 
 function initTheme() {
@@ -545,14 +436,6 @@ function bindEvents() {
   });
   $("#myLibraryButton").addEventListener("click", openMyLibrary);
   $("#adminButton").addEventListener("click", openAdminPanel);
-  $("#bookAdminForm").addEventListener("submit", saveAdminBook);
-  $("#resetBookForm").addEventListener("click", resetAdminForm);
-  $("#adminBookList").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-edit-book]");
-    if (!button) return;
-    const book = state.adminBooks.find((item) => item.id === button.dataset.editBook);
-    if (book) fillAdminForm(book);
-  });
   $("#authForm").addEventListener("submit", submitAuth);
   document.querySelectorAll(".auth-tab").forEach((tab) => tab.addEventListener("click", () => setAuthMode(tab.dataset.mode)));
   $("#signOutButton").addEventListener("click", async () => {
@@ -576,10 +459,6 @@ function bindEvents() {
   $("#progressBooks").addEventListener("click", (event) => {
     const button = event.target.closest("[data-resume]");
     if (button) openBook(button.dataset.resume);
-  });
-  $("#bookFile").addEventListener("change", () => {
-    const file = $("#bookFile").files?.[0];
-    $("#bookFileStatus").textContent = file ? file.name + " · " + Math.ceil(file.size / 1024) + " کیلوبایت" : "فقط PDF یا TXT، حداکثر ۵۰ مگابایت";
   });
 }
 async function init() {
