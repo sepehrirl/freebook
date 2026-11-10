@@ -28,7 +28,7 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
    - `002_security_hardening.sql`
    - `20261110175008_freebook_phase1_least_privilege.sql`
    - `20261110175133_phase1_policy_and_fk_indexes.sql`
-   - `20261110190000_phase3_storage_reader_progress.sql`
+   - `20261110184223_phase3_storage_reader_progress.sql`
 3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
 4. Configure Supabase Auth site URL and redirect allowlist for the deployed GitHub Pages URL.
 5. Configure email confirmation and production SMTP before launch.
