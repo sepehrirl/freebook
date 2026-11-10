@@ -8,7 +8,7 @@ const supabase = configured ? createClient(config.supabaseUrl, config.supabaseAn
 }) : null;
 
 const $ = (selector) => document.querySelector(selector);
-const state = { session: null, profile: null, books: [], bookmarks: new Set(), category: "all", query: "", authMode: "login", activeBook: null };
+const state = { session: null, profile: null, books: [], bookmarks: new Set(), category: "all", query: "", authMode: "login", activeBook: null, adminBooks: [], editingBookId: null };
 const categories = ["همه", "ادبیات", "داستان", "دانش", "شعر", "تاریخ", "علمی"];
 
 function escapeHtml(value = "") {
@@ -85,6 +85,7 @@ async function loadProfile() {
     state.bookmarks.clear();
     $("#accountButton").textContent = "ورود / ثبت‌نام";
     $("#myLibraryButton").hidden = true;
+    $("#adminButton").hidden = true;
     renderBooks();
     return;
   }
@@ -96,6 +97,7 @@ async function loadProfile() {
   state.bookmarks = new Set((marks || []).map((row) => row.book_id));
   $("#accountButton").textContent = profile?.display_name || "حساب من";
   $("#myLibraryButton").hidden = false;
+  $("#adminButton").hidden = profile?.role !== "admin";
   renderBooks();
 }
 function setAuthMode(mode) {
@@ -209,6 +211,141 @@ async function openMyLibrary() {
   ).join("") : '<p class="muted">هنوز مطالعه‌ای ثبت نشده است.</p>';
   $("#accountDialog").showModal();
 }
+
+function adminStatusLabel(status) {
+  return status === "published" ? "منتشرشده" : status === "archived" ? "بایگانی‌شده" : "پیش‌نویس";
+}
+function renderAdminBooks() {
+  const target = $("#adminBookList");
+  if (!state.adminBooks.length) {
+    target.innerHTML = '<p class="muted">هنوز کتابی ثبت نشده است. اولین کتاب را از فرم کناری اضافه کن.</p>';
+    return;
+  }
+  target.innerHTML = state.adminBooks.map((book) =>
+    '<article class="admin-book-row">' +
+      '<div class="admin-book-copy"><strong>' + escapeHtml(book.title) + '</strong>' +
+      '<span class="muted">' + escapeHtml(book.author) + ' · ' + adminStatusLabel(book.publication_status) + '</span></div>' +
+      '<button class="button button-quiet" type="button" data-edit-book="' + escapeHtml(book.id) + '">ویرایش</button>' +
+    '</article>'
+  ).join("");
+}
+async function loadAdminBooks() {
+  if (!state.session || state.profile?.role !== "admin") return;
+  const target = $("#adminBookList");
+  target.innerHTML = '<p class="muted">در حال دریافت فهرست کتاب‌ها…</p>';
+  const { data, error } = await supabase.from("books")
+    .select("id,slug,title,author,description,category,cover_url,content_url,license_name,license_url,source_url,attribution,publication_status,published_at,updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) {
+    target.innerHTML = '<p class="form-message">دریافت کتاب‌ها انجام نشد. سطح دسترسی مدیر را بررسی کن.</p>';
+    console.error("FreeBook admin books:", error);
+    return;
+  }
+  state.adminBooks = data || [];
+  renderAdminBooks();
+}
+function resetAdminForm() {
+  state.editingBookId = null;
+  $("#bookAdminForm").reset();
+  $("#adminBookId").value = "";
+  $("#adminFormTitle").textContent = "افزودن کتاب تازه";
+  $("#adminSaveButton").textContent = "ذخیره کتاب";
+  showMessage($("#adminMessage"), "کتاب جدید ابتدا می‌تواند به‌صورت پیش‌نویس ذخیره شود.");
+}
+function fillAdminForm(book) {
+  state.editingBookId = book.id;
+  $("#adminBookId").value = book.id;
+  $("#bookSlug").value = book.slug || "";
+  $("#bookTitle").value = book.title || "";
+  $("#bookAuthor").value = book.author || "";
+  $("#bookCategory").value = book.category || "ادبیات";
+  $("#bookDescription").value = book.description || "";
+  $("#bookCoverUrl").value = book.cover_url || "";
+  $("#bookContentUrl").value = book.content_url || "";
+  $("#bookLicense").value = book.license_name || "";
+  $("#bookLicenseUrl").value = book.license_url || "";
+  $("#bookSourceUrl").value = book.source_url || "";
+  $("#bookAttribution").value = book.attribution || "";
+  $("#bookStatus").value = book.publication_status || "draft";
+  $("#adminFormTitle").textContent = "ویرایش کتاب";
+  $("#adminSaveButton").textContent = "ذخیره تغییرات";
+  showMessage($("#adminMessage"), "وضعیت فعلی: " + adminStatusLabel(book.publication_status));
+  $("#bookTitle").focus();
+}
+async function openAdminPanel() {
+  if (!state.session || state.profile?.role !== "admin") {
+    toast("دسترسی این بخش فقط برای مدیران فعال است.");
+    return;
+  }
+  resetAdminForm();
+  $("#adminDialog").showModal();
+  await loadAdminBooks();
+}
+async function saveAdminBook(event) {
+  event.preventDefault();
+  if (!state.session || state.profile?.role !== "admin") {
+    return showMessage($("#adminMessage"), "اجازه انجام این عملیات را نداری.", true);
+  }
+  const value = (id) => $("#" + id).value.trim();
+  const title = value("bookTitle");
+  const author = value("bookAuthor");
+  const sourceUrl = safeHttpsUrl(value("bookSourceUrl"));
+  const licenseUrlValue = value("bookLicenseUrl");
+  const coverUrlValue = value("bookCoverUrl");
+  const contentUrlValue = value("bookContentUrl");
+  const licenseUrl = licenseUrlValue ? safeHttpsUrl(licenseUrlValue) : null;
+  const coverUrl = coverUrlValue ? safeHttpsUrl(coverUrlValue) : null;
+  const contentUrl = contentUrlValue ? safeHttpsUrl(contentUrlValue) : null;
+  const status = value("bookStatus");
+  if (!title || !author) return showMessage($("#adminMessage"), "عنوان و نام نویسنده را کامل وارد کن.", true);
+  if (!sourceUrl) return showMessage($("#adminMessage"), "نشانی منبع باید یک لینک معتبر HTTPS باشد.", true);
+  if (licenseUrlValue && !licenseUrl) return showMessage($("#adminMessage"), "لینک مجوز باید HTTPS باشد.", true);
+  if (coverUrlValue && !coverUrl) return showMessage($("#adminMessage"), "لینک جلد باید HTTPS باشد.", true);
+  if (contentUrlValue && !contentUrl) return showMessage($("#adminMessage"), "لینک فایل کتاب باید HTTPS باشد.", true);
+  if (status === "published" && !contentUrl) {
+    return showMessage($("#adminMessage"), "برای انتشار، ابتدا لینک امن فایل یا متن کتاب را وارد کن.", true);
+  }
+  if (!value("bookLicense") || !value("bookAttribution")) {
+    return showMessage($("#adminMessage"), "نام مجوز و اطلاعات انتساب اثر الزامی است.", true);
+  }
+  const existing = state.adminBooks.find((book) => book.id === state.editingBookId);
+  const payload = {
+    slug: value("bookSlug") || (existing?.slug || ("book-" + crypto.randomUUID())),
+    title,
+    author,
+    category: value("bookCategory"),
+    description: value("bookDescription"),
+    cover_url: coverUrl,
+    content_url: contentUrl,
+    license_name: value("bookLicense"),
+    license_url: licenseUrl,
+    source_url: sourceUrl,
+    attribution: value("bookAttribution"),
+    publication_status: status,
+    published_at: status === "published" ? (existing?.published_at || new Date().toISOString()) : null
+  };
+  const button = $("#adminSaveButton");
+  button.disabled = true;
+  showMessage($("#adminMessage"), "در حال ذخیره در پایگاه داده…");
+  try {
+    let result;
+    if (state.editingBookId) {
+      result = await supabase.from("books").update(payload).eq("id", state.editingBookId).select("id").single();
+    } else {
+      result = await supabase.from("books").insert(payload).select("id").single();
+    }
+    if (result.error) throw result.error;
+    toast(status === "published" ? "کتاب منتشر شد." : status === "archived" ? "کتاب بایگانی شد." : "پیش‌نویس ذخیره شد.");
+    resetAdminForm();
+    await Promise.all([loadAdminBooks(), loadBooks()]);
+  } catch (error) {
+    console.error("FreeBook save book:", error);
+    showMessage($("#adminMessage"), error.message || "ذخیره کتاب انجام نشد. شناسه یکتا و دسترسی مدیر را بررسی کن.", true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function initTheme() {
   const saved = localStorage.getItem("freebook-theme");
   if (saved === "dark") document.body.classList.add("dark");
@@ -248,6 +385,15 @@ function bindEvents() {
     if (state.session) openMyLibrary(); else { setAuthMode("login"); $("#authDialog").showModal(); }
   });
   $("#myLibraryButton").addEventListener("click", openMyLibrary);
+  $("#adminButton").addEventListener("click", openAdminPanel);
+  $("#bookAdminForm").addEventListener("submit", saveAdminBook);
+  $("#resetBookForm").addEventListener("click", resetAdminForm);
+  $("#adminBookList").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-edit-book]");
+    if (!button) return;
+    const book = state.adminBooks.find((item) => item.id === button.dataset.editBook);
+    if (book) fillAdminForm(book);
+  });
   $("#authForm").addEventListener("submit", submitAuth);
   document.querySelectorAll(".auth-tab").forEach((tab) => tab.addEventListener("click", () => setAuthMode(tab.dataset.mode)));
   $("#signOutButton").addEventListener("click", async () => {

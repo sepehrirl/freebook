@@ -18,6 +18,7 @@
   <nav class="header-actions" aria-label="منوی اصلی">
     <button class="icon-button" id="themeToggle" type="button" aria-label="تغییر حالت نمایش">☾</button>
     <button class="button button-quiet" id="myLibraryButton" type="button" hidden>کتابخانه من</button>
+    <button class="button button-quiet" id="adminButton" type="button" hidden>مدیریت کتاب‌ها</button>
     <button class="button button-primary" id="accountButton" type="button">ورود / ثبت‌نام</button>
   </nav>
 </header>
@@ -84,6 +85,49 @@
     <div class="account-section"><h3>کتاب‌های نشان‌شده</h3><div id="savedBooks" class="saved-list"></div></div>
     <div class="account-section"><h3>ادامه مطالعه</h3><div id="progressBooks" class="saved-list"></div></div>
     <button class="button button-quiet button-wide" id="signOutButton" type="button">خروج از حساب</button>
+  </div>
+</dialog>
+
+
+<dialog class="dialog admin-dialog" id="adminDialog" aria-labelledby="adminTitle">
+  <form method="dialog" class="dialog-top"><span class="eyebrow">مدیریت محتوای FreeBook</span><button class="icon-button" aria-label="بستن" value="cancel">×</button></form>
+  <div class="dialog-content">
+    <h2 id="adminTitle">پنل مدیریت کتاب‌ها</h2>
+    <p class="muted">کتاب‌ها را ثبت کن، پیش‌نویس بساز و فقط پس از بررسی حقوق انتشار، منتشر کن.</p>
+    <div class="admin-layout">
+      <form id="bookAdminForm" class="stack-form admin-form">
+        <h3 id="adminFormTitle">افزودن کتاب تازه</h3>
+        <input id="adminBookId" type="hidden">
+        <label>شناسه کوتاه (اختیاری)<input id="bookSlug" maxlength="100" placeholder="مثلاً golestan"></label>
+        <label>عنوان کتاب<input id="bookTitle" required maxlength="180"></label>
+        <label>نویسنده<input id="bookAuthor" required maxlength="160"></label>
+        <label>دسته‌بندی
+          <select id="bookCategory" required>
+            <option value="ادبیات">ادبیات</option><option value="داستان">داستان</option><option value="دانش">دانش</option><option value="شعر">شعر</option><option value="تاریخ">تاریخ</option><option value="علمی">علمی</option><option value="عمومی">عمومی</option>
+          </select>
+        </label>
+        <label>معرفی کتاب<textarea id="bookDescription" rows="3" maxlength="1200"></textarea></label>
+        <label>لینک جلد (HTTPS)<input id="bookCoverUrl" type="url" inputmode="url" placeholder="https://…"></label>
+        <label>لینک فایل یا متن کتاب (HTTPS)<input id="bookContentUrl" type="url" inputmode="url" placeholder="https://…"></label>
+        <label>نام مجوز انتشار<input id="bookLicense" required maxlength="160" placeholder="مثلاً Public Domain یا CC BY 4.0"></label>
+        <label>لینک متن مجوز (اختیاری)<input id="bookLicenseUrl" type="url" inputmode="url" placeholder="https://…"></label>
+        <label>لینک منبع اصلی<input id="bookSourceUrl" type="url" inputmode="url" required placeholder="https://…"></label>
+        <label>اطلاعات انتساب اثر<textarea id="bookAttribution" rows="3" required maxlength="1200" placeholder="نام صاحب اثر، منبع و شرایط انتساب…"></textarea></label>
+        <label>وضعیت انتشار
+          <select id="bookStatus"><option value="draft">پیش‌نویس</option><option value="published">انتشار عمومی</option><option value="archived">بایگانی</option></select>
+        </label>
+        <div class="admin-form-actions">
+          <button class="button button-primary" id="adminSaveButton" type="submit">ذخیره کتاب</button>
+          <button class="button button-quiet" id="resetBookForm" type="button">فرم جدید</button>
+        </div>
+        <p class="form-message" id="adminMessage" role="status" aria-live="polite"></p>
+        <p class="fine-print">ثبت اطلاعات در فرم به‌معنای تأیید حقوق انتشار نیست. پیش از انتشار، مجوز و منبع را مستقل بررسی کن.</p>
+      </form>
+      <section class="admin-list-panel" aria-labelledby="adminListTitle">
+        <h3 id="adminListTitle">فهرست کتاب‌ها</h3>
+        <div id="adminBookList" class="admin-book-list"><p class="muted">در حال دریافت…</p></div>
+      </section>
+    </div>
   </div>
 </dialog>
 
