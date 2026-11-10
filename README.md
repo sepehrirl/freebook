@@ -17,6 +17,8 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
 - Reader view for hosted book content.
 - Dark mode.
 - Admin-only book management: create drafts, edit metadata, publish after rights checks, and archive titles.
+- Admin-only direct PDF/TXT uploads to a private Supabase Storage bucket.
+- PDF page navigation and text reader with saved reading position and resume support.
 - Product-wide Paper UI design system for all current and future screens.
 
 ## Setup
@@ -26,6 +28,7 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
    - `002_security_hardening.sql`
    - `20261110175008_freebook_phase1_least_privilege.sql`
    - `20261110175133_phase1_policy_and_fk_indexes.sql`
+   - `20261110190000_phase3_storage_reader_progress.sql`
 3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
 4. Configure Supabase Auth site URL and redirect allowlist for the deployed GitHub Pages URL.
 5. Configure email confirmation and production SMTP before launch.
@@ -54,3 +57,11 @@ Public visitors can read only published books. Users can access only their own p
 
 ## Release status
 This is a product foundation, not completed enterprise certification. Before launch, complete [SECURITY.md](SECURITY.md) and [docs/release-checklist.md](docs/release-checklist.md), configure monitoring and backup restoration, and perform an independent security review.
+
+
+## Phase 3 — files and reading progress
+- Uploads use the private `freebook-books` Storage bucket; only admins can add, replace, or delete files.
+- Published book files can be read through Storage row-level policies; the bucket itself remains private.
+- Supported direct uploads are PDF and plain text (TXT), up to 50 MB.
+- PDF progress stores the last page; TXT progress stores the scroll offset. Progress is saved per account.
+- Existing HTTPS-hosted book links remain supported as a fallback.
