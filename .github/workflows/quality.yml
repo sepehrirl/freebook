@@ -27,6 +27,8 @@ jobs:
           test -s supabase/migrations/001_initial_schema.sql
           test -s supabase/migrations/20261110184223_phase3_storage_reader_progress.sql
           test -s supabase/migrations/20261110201500_phase4_automated_ingestion.sql
+          test -s supabase/migrations/20261110203000_phase4_ingestion_security_cleanup.sql
+          test -s catalog/manifest.json
           test -s supabase/functions/ingest-books/index.ts
           grep -q 'id="adminDialog"' index.html
           ! grep -q 'id="bookAdminForm"' index.html
