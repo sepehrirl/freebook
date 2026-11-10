@@ -16,6 +16,14 @@ function escapeHtml(value = "") {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
 }
+function safeHttpsUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
 function toast(message) {
   const node = $("#toast");
   node.textContent = message;
@@ -159,11 +167,13 @@ async function openBook(bookId) {
   state.activeBook = book;
   $("#readerTitle").textContent = book.title;
   $("#readerMeta").textContent = book.author + " · " + book.license_name;
-  $("#readerFrameWrap").innerHTML = book.content_url
-    ? '<iframe title="متن کتاب: ' + escapeHtml(book.title) + '" src="' + escapeHtml(book.content_url) + '" loading="lazy" referrerpolicy="no-referrer"></iframe>'
-    : '<p class="muted">فایل مطالعه این کتاب هنوز بارگذاری نشده است.</p>';
-  $("#sourceLink").href = book.source_url;
-  $("#sourceLink").hidden = !book.source_url;
+  const contentUrl = safeHttpsUrl(book.content_url);
+  const sourceUrl = safeHttpsUrl(book.source_url);
+  $("#readerFrameWrap").innerHTML = contentUrl
+    ? '<iframe title="متن کتاب: ' + escapeHtml(book.title) + '" src="' + escapeHtml(contentUrl) + '" loading="lazy" referrerpolicy="no-referrer"></iframe>'
+    : '<p class="muted">فایل امن و قابل نمایش برای این کتاب ثبت نشده است.</p>';
+  $("#sourceLink").href = sourceUrl || "#";
+  $("#sourceLink").hidden = !sourceUrl;
   showMessage($("#readerMessage"), "");
   $("#readerDialog").showModal();
   if (state.session) {
