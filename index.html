@@ -108,7 +108,9 @@
         </label>
         <label>معرفی کتاب<textarea id="bookDescription" rows="3" maxlength="1200"></textarea></label>
         <label>لینک جلد (HTTPS)<input id="bookCoverUrl" type="url" inputmode="url" placeholder="https://…"></label>
-        <label>لینک فایل یا متن کتاب (HTTPS)<input id="bookContentUrl" type="url" inputmode="url" placeholder="https://…"></label>
+        <label>بارگذاری مستقیم فایل کتاب (PDF یا TXT)<input id="bookFile" type="file" accept=".pdf,.txt,application/pdf,text/plain"></label>
+        <p class="fine-print" id="bookFileStatus">فقط PDF یا TXT، حداکثر ۵۰ مگابایت</p>
+        <label>یا لینک خارجی فایل کتاب (HTTPS)<input id="bookContentUrl" type="url" inputmode="url" placeholder="https://…"></label>
         <label>نام مجوز انتشار<input id="bookLicense" required maxlength="160" placeholder="مثلاً Public Domain یا CC BY 4.0"></label>
         <label>لینک متن مجوز (اختیاری)<input id="bookLicenseUrl" type="url" inputmode="url" placeholder="https://…"></label>
         <label>لینک منبع اصلی<input id="bookSourceUrl" type="url" inputmode="url" required placeholder="https://…"></label>
@@ -137,6 +139,7 @@
     <h2 id="readerTitle">عنوان کتاب</h2>
     <p class="muted" id="readerMeta"></p>
     <div class="reader-frame-wrap" id="readerFrameWrap"><p class="muted">برای این کتاب هنوز فایل مطالعه ثبت نشده است.</p></div>
+    <p class="fine-print">پیشرفت مطالعه پس از هر صفحه PDF یا جابه‌جایی در متن، برای حساب واردشده ذخیره می‌شود.</p>
     <div class="reader-actions"><a class="button button-quiet" id="sourceLink" href="#" target="_blank" rel="noopener noreferrer" hidden>مشاهده منبع</a><button class="button button-primary" id="markComplete" type="button">علامت‌گذاری به‌عنوان خوانده‌شده</button></div>
     <p class="form-message" id="readerMessage" role="status"></p>
   </div>

@@ -25,6 +25,11 @@ jobs:
           test -s app.js
           test -s config.js
           test -s supabase/migrations/001_initial_schema.sql
+          test -s supabase/migrations/20261110184223_phase3_storage_reader_progress.sql
           grep -q 'id="adminDialog"' index.html
           grep -q 'id="bookAdminForm"' index.html
           grep -q 'async function saveAdminBook' app.js
+          grep -q 'async function loadPdfReader' app.js
+          grep -q 'createSignedUrl' app.js
+          grep -q 'id="bookFile"' index.html
+          grep -q 'id="pdfCanvas"' app.js
