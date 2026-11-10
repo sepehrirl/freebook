@@ -244,6 +244,7 @@ function bindEvents() {
     if (mark) toggleBookmark(mark.dataset.bookmark);
   });
   $("#accountButton").addEventListener("click", () => {
+    if (!configured) return toast("برای فعال‌شدن حساب‌ها، ابتدا Supabase را در config.js تنظیم کن.");
     if (state.session) openMyLibrary(); else { setAuthMode("login"); $("#authDialog").showModal(); }
   });
   $("#myLibraryButton").addEventListener("click", openMyLibrary);
@@ -263,7 +264,6 @@ async function init() {
   renderFilters();
   if (!configured) {
     await loadBooks();
-    $("#accountButton").addEventListener("click", () => toast("برای فعال‌شدن حساب‌ها، تنظیمات Supabase را در config.js وارد کن."));
     return;
   }
   const { data: { session } } = await supabase.auth.getSession();
