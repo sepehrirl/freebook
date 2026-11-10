@@ -8,7 +8,9 @@ const supabase = configured ? createClient(config.supabaseUrl, config.supabaseAn
 }) : null;
 
 const $ = (selector) => document.querySelector(selector);
-const state = { session: null, profile: null, books: [], bookmarks: new Set(), category: "all", query: "", authMode: "login", activeBook: null, adminBooks: [], editingBookId: null };
+const STORAGE_BUCKET = "freebook-books";
+const MAX_BOOK_FILE_SIZE = 50 * 1024 * 1024;
+const state = { session: null, profile: null, books: [], bookmarks: new Set(), category: "all", query: "", authMode: "login", activeBook: null, adminBooks: [], editingBookId: null, pdfDocument: null, pdfPage: 1, readerProgress: null, progressSaveTimer: null, readerLoadToken: 0 };
 const categories = ["همه", "ادبیات", "داستان", "دانش", "شعر", "تاریخ", "علمی"];
 
 function escapeHtml(value = "") {
@@ -68,7 +70,7 @@ async function loadBooks() {
     return;
   }
   const { data, error } = await supabase.from("books")
-    .select("id,slug,title,author,description,category,cover_url,content_url,license_name,license_url,source_url,attribution")
+    .select("id,slug,title,author,description,category,cover_url,content_url,content_path,content_mime_type,content_size_bytes,license_name,license_url,source_url,attribution")
     .eq("publication_status", "published")
     .order("published_at", { ascending: false });
   if (error) {
@@ -163,26 +165,140 @@ async function toggleBookmark(bookId) {
   renderBooks();
   toast(isSaved ? "از کتابخانه شخصی حذف شد." : "به کتابخانه شخصی اضافه شد.");
 }
+function parseSavedPosition(value) {
+  if (!value) return {};
+  try { return JSON.parse(value); } catch { return {}; }
+}
+async function saveReaderProgress(position, percent) {
+  if (!state.session || !state.activeBook) return;
+  const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  const { error } = await supabase.from("reading_progress").upsert({
+    user_id: state.session.user.id,
+    book_id: state.activeBook.id,
+    progress_percent: Number(safePercent.toFixed(2)),
+    last_position: JSON.stringify(position),
+    updated_at: new Date().toISOString()
+  }, { onConflict: "user_id,book_id" });
+  if (error) {
+    console.warn("Could not save reading progress:", error);
+    showMessage($("#readerMessage"), "ذخیره خودکار پیشرفت انجام نشد؛ اتصال را بررسی کن.", true);
+  } else {
+    state.readerProgress = { position, percent: safePercent };
+    showMessage($("#readerMessage"), "پیشرفت مطالعه ذخیره شد.");
+  }
+}
+function scheduleTextProgressSave(node) {
+  if (!node || !state.session || !state.activeBook) return;
+  window.clearTimeout(state.progressSaveTimer);
+  state.progressSaveTimer = window.setTimeout(() => {
+    const maxScroll = Math.max(1, node.scrollHeight - node.clientHeight);
+    const percent = Math.min(100, Math.max(0, node.scrollTop / maxScroll * 100));
+    saveReaderProgress({ kind: "text", scrollTop: Math.round(node.scrollTop) }, percent);
+  }, 700);
+}
+async function loadPdfReader(url, savedPosition = {}) {
+  const wrap = $("#readerFrameWrap");
+  wrap.innerHTML = '<div class="pdf-reader"><div class="reader-toolbar"><button class="button button-quiet" id="pdfPrev" type="button">صفحه قبل</button><span id="pdfPageLabel" class="muted">در حال بارگذاری…</span><button class="button button-quiet" id="pdfNext" type="button">صفحه بعد</button></div><div class="pdf-page-stage"><canvas id="pdfCanvas" aria-label="صفحه کتاب"></canvas></div></div>';
+  try {
+    const pdfjs = await import("https://esm.sh/pdfjs-dist@4.10.38");
+    pdfjs.GlobalWorkerOptions.workerSrc = "https://esm.sh/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+    state.pdfDocument = await pdfjs.getDocument({ url }).promise;
+    state.pdfPage = Math.max(1, Math.min(state.pdfDocument.numPages, Number(savedPosition.page) || 1));
+    await renderPdfPage();
+  } catch (error) {
+    console.error("FreeBook PDF reader:", error);
+    wrap.innerHTML = '<p class="state-card">نمایش PDF ممکن نشد. می‌توانی فایل را از پیوند منبع دریافت و با برنامه مناسب باز کنی.</p>';
+    showMessage($("#readerMessage"), "بارگذاری PDF با خطا روبه‌رو شد.", true);
+  }
+}
+async function renderPdfPage() {
+  if (!state.pdfDocument) return;
+  const page = await state.pdfDocument.getPage(state.pdfPage);
+  const viewport = page.getViewport({ scale: 1.25 });
+  const canvas = $("#pdfCanvas");
+  if (!canvas) return;
+  const context = canvas.getContext("2d");
+  canvas.width = Math.ceil(viewport.width);
+  canvas.height = Math.ceil(viewport.height);
+  await page.render({ canvasContext: context, viewport }).promise;
+  $("#pdfPageLabel").textContent = "صفحه " + state.pdfPage + " از " + state.pdfDocument.numPages;
+  $("#pdfPrev").disabled = state.pdfPage <= 1;
+  $("#pdfNext").disabled = state.pdfPage >= state.pdfDocument.numPages;
+  if (state.session && state.activeBook) {
+    const percent = state.pdfPage / state.pdfDocument.numPages * 100;
+    await saveReaderProgress({ kind: "pdf", page: state.pdfPage }, percent);
+  }
+}
+async function loadTextReader(url, savedPosition = {}) {
+  const wrap = $("#readerFrameWrap");
+  wrap.innerHTML = '<div class="text-reader" id="textReader" tabindex="0" aria-label="متن کتاب"></div>';
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("دریافت متن کتاب ناموفق بود.");
+  const text = await response.text();
+  const node = $("#textReader");
+  node.textContent = text;
+  node.scrollTop = Math.max(0, Number(savedPosition.scrollTop) || 0);
+  node.addEventListener("scroll", () => scheduleTextProgressSave(node), { passive: true });
+  if (!text.length) showMessage($("#readerMessage"), "این فایل متنی خالی است.", true);
+}
 async function openBook(bookId) {
   const book = state.books.find((item) => item.id === bookId);
   if (!book) return;
   state.activeBook = book;
+  state.pdfDocument = null;
+  state.pdfPage = 1;
+  state.readerProgress = null;
+  const loadToken = ++state.readerLoadToken;
   $("#readerTitle").textContent = book.title;
   $("#readerMeta").textContent = book.author + " · " + book.license_name;
-  const contentUrl = safeHttpsUrl(book.content_url);
+  $("#readerFrameWrap").innerHTML = '<p class="muted">در حال آماده‌سازی کتاب…</p>';
   const sourceUrl = safeHttpsUrl(book.source_url);
-  $("#readerFrameWrap").innerHTML = contentUrl
-    ? '<iframe title="متن کتاب: ' + escapeHtml(book.title) + '" src="' + escapeHtml(contentUrl) + '" loading="lazy" referrerpolicy="no-referrer"></iframe>'
-    : '<p class="muted">فایل امن و قابل نمایش برای این کتاب ثبت نشده است.</p>';
   $("#sourceLink").href = sourceUrl || "#";
   $("#sourceLink").hidden = !sourceUrl;
   showMessage($("#readerMessage"), "");
   $("#readerDialog").showModal();
+
+  let savedPosition = {};
   if (state.session) {
-    const { error } = await supabase.from("reading_progress").upsert({
-      user_id: state.session.user.id, book_id: book.id, progress_percent: 0
-    }, { onConflict: "user_id,book_id", ignoreDuplicates: true });
-    if (error) console.warn("Could not initialize reading progress:", error);
+    const { data, error } = await supabase.from("reading_progress")
+      .select("progress_percent,last_position")
+      .eq("user_id", state.session.user.id)
+      .eq("book_id", book.id)
+      .maybeSingle();
+    if (error) console.warn("Could not load reading progress:", error);
+    if (data) {
+      savedPosition = parseSavedPosition(data.last_position);
+      state.readerProgress = { percent: Number(data.progress_percent) || 0, position: savedPosition };
+    }
+  }
+  if (loadToken !== state.readerLoadToken) return;
+
+  try {
+    let contentUrl = "";
+    if (book.content_path) {
+      const { data, error } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(book.content_path, 3600);
+      if (error) throw error;
+      contentUrl = data?.signedUrl || "";
+    } else {
+      contentUrl = safeHttpsUrl(book.content_url);
+    }
+    if (!contentUrl) {
+      $("#readerFrameWrap").innerHTML = '<p class="muted">برای این کتاب هنوز فایل مطالعه ثبت نشده است.</p>';
+      return;
+    }
+    const pathOrUrl = book.content_path || contentUrl;
+    const isPdf = book.content_mime_type === "application/pdf" || /\.pdf(?:$|[?#])/i.test(pathOrUrl);
+    const isText = book.content_mime_type === "text/plain" || /\.txt(?:$|[?#])/i.test(pathOrUrl);
+    if (isPdf) await loadPdfReader(contentUrl, savedPosition);
+    else if (isText) await loadTextReader(contentUrl, savedPosition);
+    else {
+      $("#readerFrameWrap").innerHTML = '<iframe title="متن کتاب: ' + escapeHtml(book.title) + '" src="' + escapeHtml(contentUrl) + '" loading="lazy" referrerpolicy="no-referrer"></iframe>';
+      showMessage($("#readerMessage"), "این قالب در نمایشگر داخلی پیشرفت صفحه‌ای ندارد.");
+    }
+  } catch (error) {
+    console.error("FreeBook reader load:", error);
+    $("#readerFrameWrap").innerHTML = '<p class="state-card">بارگذاری فایل کتاب ممکن نشد. دسترسی فایل و وضعیت انتشار آن را بررسی کن.</p>';
+    showMessage($("#readerMessage"), "دریافت فایل کتاب ناموفق بود.", true);
   }
 }
 async function markComplete() {
@@ -191,9 +307,14 @@ async function markComplete() {
     return;
   }
   const { error } = await supabase.from("reading_progress").upsert({
-    user_id: state.session.user.id, book_id: state.activeBook.id, progress_percent: 100
+    user_id: state.session.user.id,
+    book_id: state.activeBook.id,
+    progress_percent: 100,
+    last_position: JSON.stringify({ kind: "complete" }),
+    updated_at: new Date().toISOString()
   }, { onConflict: "user_id,book_id" });
   if (error) return showMessage($("#readerMessage"), "ذخیره پیشرفت انجام نشد.", true);
+  state.readerProgress = { percent: 100, position: { kind: "complete" } };
   showMessage($("#readerMessage"), "این کتاب به‌عنوان خوانده‌شده ثبت شد.");
 }
 async function openMyLibrary() {
@@ -207,7 +328,7 @@ async function openMyLibrary() {
     '<div class="saved-row"><span>' + escapeHtml(row.books?.title || "کتاب") + '</span><span class="muted">نشان‌شده</span></div>'
   ).join("") : '<p class="muted">هنوز کتابی نشان نکرده‌ای.</p>';
   $("#progressBooks").innerHTML = progress?.length ? progress.map((row) =>
-    '<div class="saved-row"><span>' + escapeHtml(row.books?.title || "کتاب") + '</span><span class="muted">' + Number(row.progress_percent) + "٪</span></div>"
+    '<div class="saved-row"><span>' + escapeHtml(row.books?.title || "کتاب") + '</span><button class="button button-quiet" type="button" data-resume="' + escapeHtml(row.book_id) + '">ادامه · ' + Number(row.progress_percent) + "٪</button></div>"
   ).join("") : '<p class="muted">هنوز مطالعه‌ای ثبت نشده است.</p>';
   $("#accountDialog").showModal();
 }
