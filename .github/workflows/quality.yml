@@ -26,10 +26,14 @@ jobs:
           test -s config.js
           test -s supabase/migrations/001_initial_schema.sql
           test -s supabase/migrations/20261110184223_phase3_storage_reader_progress.sql
+          test -s supabase/migrations/20261110201500_phase4_automated_ingestion.sql
+          test -s supabase/functions/ingest-books/index.ts
           grep -q 'id="adminDialog"' index.html
-          grep -q 'id="bookAdminForm"' index.html
-          grep -q 'async function saveAdminBook' app.js
+          ! grep -q 'id="bookAdminForm"' index.html
+          ! grep -q 'async function saveAdminBook' app.js
+          grep -q 'async function loadIngestionRuns' app.js
           grep -q 'async function loadPdfReader' app.js
           grep -q 'createSignedUrl' app.js
-          grep -q 'id="bookFile"' index.html
+          grep -q 'id="ingestionRuns"' index.html
           grep -q 'id="pdfCanvas"' app.js
+          grep -q 'CC-BY-SA-4.0' supabase/functions/ingest-books/index.ts
