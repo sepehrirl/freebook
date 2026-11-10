@@ -16,8 +16,8 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
 - Personal bookmarks and reading progress.
 - Reader view for hosted book content.
 - Dark mode.
-- Admin-only book management: create drafts, edit metadata, publish after rights checks, and archive titles.
-- Admin-only direct PDF/TXT uploads to a private Supabase Storage bucket.
+- Server-side automated ingestion of verified, openly licensed PDF/TXT books into a private Supabase Storage bucket.
+- Admin-only visibility into ingestion run history; browser-side manual book entry and uploads are disabled.
 - PDF page navigation and text reader with saved reading position and resume support.
 - Product-wide Paper UI design system for all current and future screens.
 
@@ -29,12 +29,13 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
    - `20261110175008_freebook_phase1_least_privilege.sql`
    - `20261110175133_phase1_policy_and_fk_indexes.sql`
    - `20261110184223_phase3_storage_reader_progress.sql`
+   - `20261110201500_phase4_automated_ingestion.sql`
 3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
 4. Configure Supabase Auth site URL and redirect allowlist for the deployed GitHub Pages URL.
 5. Configure email confirmation and production SMTP before launch.
-6. Publish only books with verified redistribution rights. Every book must include `license_name`, `source_url`, and `attribution`.
-7. Set `publication_status = 'published'` only after rights and file checks.
-10. Enable GitHub Pages for the `main` branch root.
+6. Configure only reviewed source manifests with verified redistribution rights.
+7. The ingestion function publishes a book only after rights, file, host, size, and duplicate checks pass.
+8. Enable GitHub Pages for the `main` branch root.
 
 ## Promote a trusted account to admin
 Create the account through the website first. Then run in Supabase SQL Editor as project owner, replacing the email:
@@ -65,3 +66,10 @@ This is a product foundation, not completed enterprise certification. Before lau
 - Supported direct uploads are PDF and plain text (TXT), up to 50 MB.
 - PDF progress stores the last page; TXT progress stores the scroll offset. Progress is saved per account.
 - Existing HTTPS-hosted book links remain supported as a fallback.
+
+## Phase 4 — automated book ingestion
+- The `ingest-books` Supabase Edge Function runs from Supabase Cron daily.
+- It accepts only verified CC0 1.0, CC BY 4.0, and CC BY-SA 4.0 manifest entries. Non-commercial licenses are not included in the automatic allowlist.
+- The importer validates HTTPS host allowlists, PDF signatures / UTF-8 TXT, 50 MiB size, SHA-256 duplicates, and source identity before publishing.
+- Source feeds are curated and stored server-side in `public.book_ingestion_sources`; browser roles cannot edit them. The admin panel shows recent run history and imported catalogue entries.
+- The scheduled job is deployed but imports no books until at least one vetted source manifest is registered. It never guesses that a free-to-read file may be redistributed.
