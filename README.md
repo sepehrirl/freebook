@@ -16,7 +16,8 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
 - Personal bookmarks and reading progress.
 - Reader view for hosted book content.
 - Dark mode.
-- Database migrations with RLS and admin-only publishing rules.
+- Admin-only book management: create drafts, edit metadata, publish after rights checks, and archive titles.
+- Product-wide Paper UI design system for all current and future screens.
 
 ## Setup
 1. Supabase project is connected in `config.js` using the project URL and a public publishable key.
@@ -28,7 +29,7 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
 5. Configure email confirmation and production SMTP before launch.
 6. Publish only books with verified redistribution rights. Every book must include `license_name`, `source_url`, and `attribution`.
 7. Set `publication_status = 'published'` only after rights and file checks.
-8. Enable GitHub Pages for the `main` branch root.
+10. Enable GitHub Pages for the `main` branch root.
 
 ## Promote a trusted account to admin
 Create the account through the website first. Then run in Supabase SQL Editor as project owner, replacing the email:
