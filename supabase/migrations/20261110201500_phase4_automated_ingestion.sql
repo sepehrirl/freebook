@@ -1,4 +1,6 @@
 -- FreeBook Phase 4: automated, rights-gated book ingestion
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
 alter table public.books
   add column if not exists ingestion_source_key text,
   add column if not exists ingestion_external_id text,
