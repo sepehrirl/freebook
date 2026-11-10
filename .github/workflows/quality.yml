@@ -25,3 +25,6 @@ jobs:
           test -s app.js
           test -s config.js
           test -s supabase/migrations/001_initial_schema.sql
+          grep -q 'id="adminDialog"' index.html
+          grep -q 'id="bookAdminForm"' index.html
+          grep -q 'async function saveAdminBook' app.js
