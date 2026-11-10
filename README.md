@@ -16,20 +16,19 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
 - Personal bookmarks and reading progress.
 - Reader view for hosted book content.
 - Dark mode.
-- Database migration with RLS and admin-only publishing rules.
-
-**Not live yet:** account features require a configured Supabase project. GitHub Pages alone cannot provide secure accounts or a database.
+- Database migrations with RLS and admin-only publishing rules.
 
 ## Setup
-1. Create a Supabase project.
-2. Run `supabase/migrations/001_initial_schema.sql` in Supabase SQL Editor.
-3. Set `supabaseUrl` and `supabaseAnonKey` in `config.js` using the project URL and publishable/anon key.
-4. Never put a `service_role` key, database password, or SMTP secret in this repository.
-5. Configure Supabase Auth site URL and redirect allowlist for the local origin and deployed GitHub Pages URL.
-6. Configure email confirmation and production SMTP before launch.
-7. Publish only books with verified redistribution rights. Every book must include `license_name`, `source_url`, and `attribution`.
-8. Set `publication_status = 'published'` only after rights and file checks.
-9. Enable GitHub Pages for the `main` branch root.
+1. Supabase project is connected in `config.js` using the project URL and a public publishable key.
+2. The database migrations are in `supabase/migrations/` and are applied in order:
+   - `001_initial_schema.sql`
+   - `002_security_hardening.sql`
+3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
+4. Configure Supabase Auth site URL and redirect allowlist for the deployed GitHub Pages URL.
+5. Configure email confirmation and production SMTP before launch.
+6. Publish only books with verified redistribution rights. Every book must include `license_name`, `source_url`, and `attribution`.
+7. Set `publication_status = 'published'` only after rights and file checks.
+8. Enable GitHub Pages for the `main` branch root.
 
 ## Promote a trusted account to admin
 Create the account through the website first. Then run in Supabase SQL Editor as project owner, replacing the email:
