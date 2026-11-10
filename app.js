@@ -297,6 +297,7 @@ async function saveAdminBook(event) {
   const coverUrl = coverUrlValue ? safeHttpsUrl(coverUrlValue) : null;
   const contentUrl = contentUrlValue ? safeHttpsUrl(contentUrlValue) : null;
   const status = value("bookStatus");
+  if (!title || !author) return showMessage($("#adminMessage"), "عنوان و نام نویسنده را کامل وارد کن.", true);
   if (!sourceUrl) return showMessage($("#adminMessage"), "نشانی منبع باید یک لینک معتبر HTTPS باشد.", true);
   if (licenseUrlValue && !licenseUrl) return showMessage($("#adminMessage"), "لینک مجوز باید HTTPS باشد.", true);
   if (coverUrlValue && !coverUrl) return showMessage($("#adminMessage"), "لینک جلد باید HTTPS باشد.", true);
