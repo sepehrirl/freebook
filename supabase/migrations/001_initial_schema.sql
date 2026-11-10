@@ -6,14 +6,14 @@ create extension if not exists pgcrypto;
 create or replace function public.set_updated_at()
 returns trigger language plpgsql as $$
 begin
-  new.updated_at = timezone('utc', now());
+  new.updated_at = now();
   return new;
 end;
 $$;
 
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
-  display_name text not null default 'کتاب‌خوان',
+  display_name text not null default 'کتاب‌خوان' check (length(trim(display_name)) between 1 and 60),
   role text not null default 'reader' check (role in ('reader', 'admin')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
