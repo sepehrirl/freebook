@@ -32,8 +32,8 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
    - `20261110201500_phase4_automated_ingestion.sql`
    - `20261110203000_phase4_ingestion_security_cleanup.sql`
 3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
-4. Configure Supabase Auth site URL and redirect allowlist for the deployed GitHub Pages URL.
-5. Configure email confirmation and production SMTP before launch.
+4. Complete [docs/auth-setup.md](docs/auth-setup.md): configure the production Site URL, exact Redirect URL, email confirmation, and SMTP.
+5. Keep email confirmation enabled; the app supports resend-confirmation and password recovery.
 6. Configure only reviewed source manifests with verified redistribution rights.
 7. The ingestion function publishes a book only after rights, file, host, size, and duplicate checks pass.
 8. Enable GitHub Pages for the `main` branch root.
