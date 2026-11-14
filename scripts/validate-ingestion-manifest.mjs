@@ -1,6 +1,6 @@
 import fs from "node:fs";
 const manifest = JSON.parse(fs.readFileSync("catalog/manifest.json", "utf8"));
-const allowed = new Set(["CC0-1.0","CC-BY-1.0","CC-BY-3.0","CC-BY-4.0","CC-BY-SA-3.0","CC-BY-SA-4.0","GFDL-1.2","GFDL-1.2-or-later","GFDL-1.3-or-later"]);
+const allowed = new Set(["CC0-1.0","CC-BY-1.0","CC-BY-2.5-CA","CC-BY-3.0","CC-BY-4.0","CC-BY-SA-2.5","CC-BY-SA-3.0","CC-BY-SA-4.0","GFDL-1.2","GFDL-1.2-or-later","GFDL-1.3-or-later"]);
 if (!Array.isArray(manifest.items) || manifest.items.length !== 20) throw new Error("Expected exactly 20 curated STEM books.");
 const ids = new Set();
 for (const [i, item] of manifest.items.entries()) {
