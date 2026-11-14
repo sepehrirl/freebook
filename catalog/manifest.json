@@ -64,9 +64,9 @@
       "description": "A second-semester calculus-based physics textbook covering electricity, magnetism, circuits, electromagnetic waves, and optics.",
       "category": "Physics",
       "language": "en",
-      "content_url": "https://www.cbphysics.org/downloadsII/cbPhysicsIIb24.pdf",
-      "source_url": "https://www.cbphysics.org/downloadsII.html",
-      "rights_evidence_url": "https://collection.bccampus.ca/resource/VeQfUwfQ/",
+      "content_url": "https://openlibrary-repo.ecampusontario.ca/jspui/bitstream/123456789/534/2/cbPhysicsIIb24.pdf",
+      "source_url": "https://openlibrary-repo.ecampusontario.ca/jspui/handle/123456789/534",
+      "rights_evidence_url": "https://openlibrary-repo.ecampusontario.ca/jspui/bitstream/123456789/534/2/cbPhysicsIIb24.pdf",
       "license_code": "CC-BY-SA-2.5",
       "rights_verified": true,
       "attribution": "Jeffrey W. Schnick, Calculus-Based Physics II, 2008. Licensed CC BY-SA 2.5 except where otherwise noted, as recorded by BCcampus. Preserve the original attribution and license notice."
