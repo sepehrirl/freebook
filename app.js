@@ -4,7 +4,7 @@ const config = window.FREEBOOK_CONFIG || {};
 const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(config.supabaseUrl || "") &&
   !!config.supabaseAnonKey && !String(config.supabaseAnonKey).includes("YOUR_");
 const supabase = configured ? createClient(config.supabaseUrl, config.supabaseAnonKey, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "implicit" }
 }) : null;
 
 const $ = (selector) => document.querySelector(selector);
