@@ -31,6 +31,7 @@ FreeBook is a Persian, RTL-first online library with a paper-inspired interface.
    - `20261110184223_phase3_storage_reader_progress.sql`
    - `20261110201500_phase4_automated_ingestion.sql`
    - `20261110203000_phase4_ingestion_security_cleanup.sql`
+   - `20261114143000_phase4_rights_evidence.sql`
 3. Never put a `service_role` key, `sb_secret_` key, database password, or SMTP secret in this repository.
 4. Complete [docs/auth-setup.md](docs/auth-setup.md): configure the production Site URL, exact Redirect URL, email confirmation, and SMTP.
 5. Keep email confirmation enabled; the app supports resend-confirmation and password recovery.
@@ -70,7 +71,7 @@ This is a product foundation, not completed enterprise certification. Before lau
 
 ## Phase 4 — automated book ingestion
 - The `ingest-books` Supabase Edge Function runs from Supabase Cron daily.
-- It accepts only verified CC0 1.0, CC BY 4.0, and CC BY-SA 4.0 manifest entries. Non-commercial licenses are not included in the automatic allowlist.
-- The importer validates HTTPS host allowlists, PDF signatures / UTF-8 TXT, 50 MiB size, SHA-256 duplicates, and source identity before publishing.
+- The first curated seed contains 20 English STEM textbooks with explicitly verified CC BY, CC BY-SA, or GNU FDL terms. Non-commercial-only and NoDerivatives works are excluded.
+- The importer validates HTTPS source/evidence/content hosts and redirect destinations, PDF signatures, 50 MiB size, SHA-256 duplicates, and source identity before publishing. It stores a rights-evidence URL on every imported book.
 - Source feeds are curated and stored server-side in `public.book_ingestion_sources`; browser roles cannot edit them. The admin panel shows recent run history and imported catalogue entries.
-- The scheduled job is deployed but imports no books until at least one vetted source manifest is registered. It never guesses that a free-to-read file may be redistributed.
+- The daily job processes up to five new verified books per run. Existing entries are skipped without blocking later manifest entries. It never assumes that a free-to-read file may be redistributed.
