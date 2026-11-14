@@ -12,9 +12,9 @@ FreeBook uses Supabase Auth for identity and PostgreSQL Row Level Security (RLS)
 - Admin roles must be assigned by a trusted project owner in Supabase SQL Editor.
 
 ## Before public launch
-1. Configure email confirmation and production SMTP.
-2. Set a strong password policy and enable MFA for administrators.
-3. Configure auth rate limits, abuse protection, and allowed redirect URLs.
+1. Follow [docs/auth-setup.md](docs/auth-setup.md) to configure the production Site URL, exact redirect allowlist, email confirmation, and verified SMTP sender.
+2. Set a minimum 12-character password policy, enable leaked-password protection when available, and require MFA for administrators.
+3. Configure auth rate limits and abuse protection; consider CAPTCHA for public signup.
 4. Review logs and alert on unusual authentication/database activity.
 5. Configure automated backups and test a restore.
 6. Validate book files and restrict storage writes to trusted admins.
