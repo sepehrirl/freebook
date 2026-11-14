@@ -8,7 +8,7 @@ The current allowlist includes exact, versioned CC BY, CC BY-SA, and GNU FDL lic
 
 ## First curated seed
 
-`catalog/manifest.json` contains 20 English STEM titles across mathematics, physics, computer science, and engineering. Each entry has a direct PDF URL, author/title attribution, exact license identifier, source page, and rights-evidence URL. The original PDF is preserved unchanged so its page-level credits and license notices remain intact.
+`catalog/manifest.json` contains 20 English STEM titles across mathematics, physics, computer science, and engineering. Each entry has a direct PDF URL within the current 50 MiB file limit, author/title attribution, exact license identifier, source page, and rights-evidence URL. The original PDF is preserved unchanged so its page-level credits and license notices remain intact.
 
 ## Runtime
 
