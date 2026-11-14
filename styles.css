@@ -34,3 +34,9 @@
 .dark .pdf-page-stage{background:#26221e}
 .dark .pdf-page-stage canvas{filter:sepia(.08)}
 @media(max-width:480px){.reader-toolbar{gap:5px}.reader-toolbar .button{font-size:.75rem;padding:6px 8px}.pdf-reader{padding:6px}}
+
+/* Auth recovery and confirmation actions */
+.auth-secondary-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.text-action{border:0;background:transparent;color:var(--accent);padding:2px 0;font:inherit;font-size:.82rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.text-action:disabled{opacity:.55;cursor:wait}
+[hidden]{display:none!important}
