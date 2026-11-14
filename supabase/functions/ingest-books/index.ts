@@ -5,8 +5,10 @@ const MAX_BYTES = 50 * 1024 * 1024;
 const LICENSES: Record<string, { name: string; url: string }> = {
   "CC0-1.0": { name: "CC0 1.0 Universal", url: "https://creativecommons.org/publicdomain/zero/1.0/" },
   "CC-BY-1.0": { name: "Creative Commons Attribution 1.0 Generic", url: "https://creativecommons.org/licenses/by/1.0/" },
+  "CC-BY-2.5-CA": { name: "Creative Commons Attribution 2.5 Canada", url: "https://creativecommons.org/licenses/by/2.5/ca/" },
   "CC-BY-3.0": { name: "Creative Commons Attribution 3.0 Unported", url: "https://creativecommons.org/licenses/by/3.0/" },
   "CC-BY-4.0": { name: "Creative Commons Attribution 4.0 International", url: "https://creativecommons.org/licenses/by/4.0/" },
+  "CC-BY-SA-2.5": { name: "Creative Commons Attribution-ShareAlike 2.5", url: "https://creativecommons.org/licenses/by-sa/2.5/" },
   "CC-BY-SA-3.0": { name: "Creative Commons Attribution-ShareAlike 3.0 Unported", url: "https://creativecommons.org/licenses/by-sa/3.0/" },
   "CC-BY-SA-4.0": { name: "Creative Commons Attribution-ShareAlike 4.0 International", url: "https://creativecommons.org/licenses/by-sa/4.0/" },
   "GFDL-1.2": { name: "GNU Free Documentation License 1.2", url: "https://www.gnu.org/licenses/fdl-1.2.html" },
