@@ -170,18 +170,18 @@
       "attribution": "Steven W. Ellingson, Electromagnetics, Volume 2, Virginia Tech Publishing, 2020. Licensed CC BY-SA 4.0. Preserve the original attribution and license notice."
     },
     {
-      "external_id": "signal-computing",
-      "title": "Signal Computing: Digital Signals in the Software Domain",
-      "author": "Michael Stiber; Bilin Stiber; Eric C. Larson",
-      "description": "An engineering and computing text on digital signals, signal processing, and software-based signal analysis.",
-      "category": "Engineering",
+      "external_id": "computer-networking-principles-protocols-practice",
+      "title": "Computer Networking: Principles, Protocols and Practice",
+      "author": "Olivier Bonaventure",
+      "description": "An undergraduate textbook explaining Internet architecture, networking layers, addressing, routing, transport protocols, and applications.",
+      "category": "Computer Science",
       "language": "en",
-      "content_url": "https://faculty.washington.edu/stiber/pubs/Signal-Computing/Signal%20Computing.pdf",
-      "source_url": "https://faculty.washington.edu/stiber/pubs/Signal-Computing/",
-      "rights_evidence_url": "https://faculty.washington.edu/stiber/pubs/Signal-Computing/Signal%20Computing.pdf",
+      "content_url": "https://www.opentextbooks.org.hk/system/files/export/3/3547/pdf/Computer_Networking_Principles_Protocols_and_Practice_3547.pdf",
+      "source_url": "https://www.opentextbooks.org.hk/certificates-and-diplomas/18032",
+      "rights_evidence_url": "https://www.opentextbooks.org.hk/certificates-and-diplomas/18032",
       "license_code": "CC-BY-SA-4.0",
       "rights_verified": true,
-      "attribution": "Michael and Bilin Stiber and Eric C. Larson, Signal Computing: Digital Signals in the Software Domain, University of Washington. Licensed CC BY-SA 4.0. Preserve the original attribution and license notice."
+      "attribution": "Olivier Bonaventure, Computer Networking: Principles, Protocols and Practice, Open Textbooks for Hong Kong, 2016. Licensed CC BY-SA 4.0. Preserve the original attribution and license notice."
     },
     {
       "external_id": "operating-systems-and-middleware",
