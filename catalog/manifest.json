@@ -86,18 +86,18 @@
       "attribution": "David Lippman, Math in Society, Version 2.6, July 2022. Licensed under Creative Commons Attribution-ShareAlike 4.0 International. Preserve the original attribution and license notice."
     },
     {
-      "external_id": "algebra-and-trigonometry-2e",
-      "title": "Algebra and Trigonometry 2e",
-      "author": "Jay Abramson et al.",
-      "description": "A college-level text on algebra, functions, equations, trigonometry, analytic geometry, sequences, and probability.",
+      "external_id": "linear-algebra-hefferon-4e",
+      "title": "Linear Algebra (4th Edition)",
+      "author": "Jim Hefferon",
+      "description": "An open undergraduate linear algebra textbook covering linear systems, matrices, vector spaces, linear maps, determinants, eigenvalues, and applications.",
       "category": "Mathematics",
       "language": "en",
-      "content_url": "https://assets.openstax.org/oscms-prodcms/media/documents/algebra-and-trigonometry-2e_-_WEB.pdf",
-      "source_url": "https://openstax.org/details/books/algebra-and-trigonometry",
-      "rights_evidence_url": "https://assets.openstax.org/oscms-prodcms/media/documents/algebra-and-trigonometry-2e_-_WEB.pdf",
-      "license_code": "CC-BY-4.0",
+      "content_url": "https://upload.wikimedia.org/wikipedia/commons/a/a3/Jim_Hefferon_-_Linear_Algebra_%284th_Edition%29.pdf",
+      "source_url": "https://hefferon.net/linearalgebra/",
+      "rights_evidence_url": "https://commons.wikimedia.org/wiki/File:Jim_Hefferon_-_Linear_Algebra_(4th_Edition).pdf",
+      "license_code": "GFDL-1.2-or-later",
       "rights_verified": true,
-      "attribution": "Jay Abramson and contributing authors, Algebra and Trigonometry 2e, OpenStax, Rice University. Licensed CC BY 4.0, except any separately credited third-party material. Preserve the original PDF, page-level attribution, and figure credits."
+      "attribution": "Jim Hefferon, Linear Algebra, 4th Edition, 2020. Licensed under GNU Free Documentation License 1.2 or later (also available under CC BY 3.0 US). This import uses the GFDL grant; preserve the original license appendix and attribution."
     },
     {
       "external_id": "discrete-mathematics-open-introduction-3e",
