@@ -218,12 +218,12 @@
       "description": "An open engineering textbook introducing fluid mechanics and its core principles and applications.",
       "category": "Engineering",
       "language": "en",
-      "content_url": "https://zenodo.org/records/8078348/files/fluidMechanics.pdf?download=1",
-      "source_url": "https://bar-meir.org/fluidMech/index.php",
-      "rights_evidence_url": "https://bar-meir.org/fluidMech/index.php",
-      "license_code": "GFDL-1.2-or-later",
+      "content_url": "https://zenodo.org/api/records/8078348/files/fluidMechanics.pdf/content",
+      "source_url": "https://zenodo.org/records/8078348",
+      "rights_evidence_url": "https://zenodo.org/api/records/8078348",
+      "license_code": "CC-BY-4.0",
       "rights_verified": true,
-      "attribution": "Genick Bar-Meir, Basics of Fluid Mechanics, Potto Project, Version 0.7.0 pre-release, 2023. Licensed under GNU Free Documentation License 1.2 or later (or the separate Potto license). This import uses the GFDL grant; preserve the original license appendix."
+      "attribution": "Genick Bar-Meir, Basics of Fluid Mechanics, Potto Project, Version 0.7.0.pre, 2023. Licensed CC BY 4.0 as recorded in Zenodo record 8078348. Preserve the original author attribution and all included credits."
     },
     {
       "external_id": "a-gentle-introduction-to-the-art-of-mathematics",
