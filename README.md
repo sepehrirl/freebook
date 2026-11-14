@@ -71,7 +71,7 @@ This is a product foundation, not completed enterprise certification. Before lau
 
 ## Phase 4 — automated book ingestion
 - The `ingest-books` Supabase Edge Function runs from Supabase Cron daily.
-- The first curated seed contains 20 English STEM textbooks with explicitly verified CC BY, CC BY-SA, or GNU FDL terms. Non-commercial-only and NoDerivatives works are excluded.
+- The first curated seed contains 20 English STEM textbooks with explicitly verified CC BY, CC BY-SA, or GNU FDL terms. Oversized PDFs are excluded rather than weakening the 50 MiB storage limit. Non-commercial-only and NoDerivatives works are excluded.
 - The importer validates HTTPS source/evidence/content hosts and redirect destinations, PDF signatures, 50 MiB size, SHA-256 duplicates, and source identity before publishing. It stores a rights-evidence URL on every imported book.
 - Source feeds are curated and stored server-side in `public.book_ingestion_sources`; browser roles cannot edit them. The admin panel shows recent run history and imported catalogue entries.
 - The daily job processes up to five new verified books per run. Existing entries are skipped without blocking later manifest entries. It never assumes that a free-to-read file may be redistributed.
