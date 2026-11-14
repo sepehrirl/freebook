@@ -101,13 +101,21 @@ async function loadProfile() {
   $("#adminButton").hidden = profile?.role !== "admin";
   renderBooks();
 }
+function authRedirectUrl() {
+  // Use the exact page currently hosting FreeBook (including GitHub Pages project paths).
+  return window.location.origin + window.location.pathname;
+}
 function setAuthMode(mode) {
   state.authMode = mode;
   const signup = mode === "signup";
   $("#nameField").hidden = !signup;
   $("#displayName").required = signup;
   $("#password").autocomplete = signup ? "new-password" : "current-password";
+  $("#password").minLength = signup ? 12 : 1;
   $("#authSubmit").textContent = signup ? "ساخت حساب" : "ورود";
+  $("#forgotPasswordButton").hidden = signup;
+  $("#resendConfirmationButton").hidden = true;
+  $("#authForm").hidden = false;
   document.querySelectorAll(".auth-tab").forEach((tab) => {
     const active = tab.dataset.mode === mode;
     tab.classList.toggle("is-active", active);
@@ -115,38 +123,140 @@ function setAuthMode(mode) {
   });
   showMessage($("#authMessage"), "");
 }
+function friendlyAuthError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  if (message.includes("email not confirmed")) {
+    $("#resendConfirmationButton").hidden = false;
+    return "ایمیل حساب هنوز تأیید نشده. ایمیل را دوباره ارسال کن یا صندوق هرزنامه را بررسی کن.";
+  }
+  if (message.includes("invalid login credentials")) return "ایمیل یا رمز عبور درست نیست.";
+  if (message.includes("password should be at least")) return "رمز عبور باید حداقل ۱۲ نویسه باشد.";
+  if (message.includes("rate limit") || message.includes("too many requests")) return "درخواست‌ها زیاد شده‌اند؛ چند دقیقه دیگر دوباره تلاش کن.";
+  if (message.includes("expired") || message.includes("invalid")) return "لینک تأیید معتبر نیست یا منقضی شده. درخواست ایمیل تازه بده.";
+  return "عملیات انجام نشد. اتصال اینترنت و تنظیمات حساب را بررسی کن و دوباره تلاش کن.";
+}
 async function submitAuth(event) {
   event.preventDefault();
-  if (!supabase) return showMessage($("#authMessage"), "ابتدا تنظیمات Supabase را تکمیل کن.", true);
-  const email = $("#email").value.trim();
+  if (!supabase) return showMessage($("#authMessage"), "تنظیمات اتصال به پایگاه داده کامل نیست.", true);
+  const email = $("#email").value.trim().toLowerCase();
   const password = $("#password").value;
   const displayName = $("#displayName").value.trim();
   const button = $("#authSubmit");
+  if (state.authBusy) return;
+  if (state.authMode === "signup" && password.length < 12) {
+    return showMessage($("#authMessage"), "برای امنیت حساب، رمز عبور حداقل باید ۱۲ نویسه باشد.", true);
+  }
+  state.authBusy = true;
   button.disabled = true;
-  showMessage($("#authMessage"), "لطفاً کمی صبر کن…");
+  showMessage($("#authMessage"), "در حال بررسی اطلاعات…");
   try {
     if (state.authMode === "signup") {
       const { data, error } = await supabase.auth.signUp({
-        email, password, options: { data: { display_name: displayName || "کتاب‌خوان" } }
+        email,
+        password,
+        options: {
+          data: { display_name: displayName || "کتاب‌خوان" },
+          emailRedirectTo: authRedirectUrl()
+        }
       });
       if (error) throw error;
       if (data.session) {
+        state.session = data.session;
+        await loadProfile();
         $("#authDialog").close();
         toast("حساب ساخته شد؛ خوش آمدی!");
       } else {
-        showMessage($("#authMessage"), "حساب ساخته شد. ایمیلت را برای تأیید حساب بررسی کن.");
+        state.pendingEmail = email;
+        $("#resendConfirmationButton").hidden = false;
+        showMessage($("#authMessage"), "درخواست ثبت‌نام ثبت شد. لینک تأیید را در ایمیل باز کن؛ پس از بازگشت به FreeBook، حساب فعال می‌شود.");
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      state.session = data.session;
+      await loadProfile();
       $("#authDialog").close();
       toast("با موفقیت وارد شدی.");
     }
   } catch (error) {
-    showMessage($("#authMessage"), error.message || "ورود یا ثبت‌نام انجام نشد.", true);
+    console.warn("FreeBook authentication:", error);
+    showMessage($("#authMessage"), friendlyAuthError(error), true);
+  } finally {
+    state.authBusy = false;
+    button.disabled = false;
+  }
+}
+async function resendSignupConfirmation() {
+  if (!supabase) return;
+  const email = (state.pendingEmail || $("#email").value).trim().toLowerCase();
+  if (!email) return showMessage($("#authMessage"), "ابتدا ایمیلت را وارد کن.", true);
+  const button = $("#resendConfirmationButton");
+  button.disabled = true;
+  try {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: authRedirectUrl() }
+    });
+    if (error) throw error;
+    state.pendingEmail = email;
+    showMessage($("#authMessage"), "اگر این حساب در انتظار تأیید باشد، ایمیل تازه‌ای ارسال می‌شود. پوشه هرزنامه را هم بررسی کن.");
+  } catch (error) {
+    showMessage($("#authMessage"), friendlyAuthError(error), true);
   } finally {
     button.disabled = false;
   }
+}
+async function requestPasswordReset() {
+  if (!supabase) return;
+  const email = $("#email").value.trim().toLowerCase();
+  if (!email) return showMessage($("#authMessage"), "ابتدا ایمیلت را وارد کن.", true);
+  const button = $("#forgotPasswordButton");
+  button.disabled = true;
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: authRedirectUrl()
+    });
+    if (error) throw error;
+    showMessage($("#authMessage"), "اگر حسابی با این ایمیل وجود داشته باشد، راهنمای بازنشانی رمز ارسال می‌شود.");
+  } catch (error) {
+    showMessage($("#authMessage"), friendlyAuthError(error), true);
+  } finally {
+    button.disabled = false;
+  }
+}
+async function submitNewPassword(event) {
+  event.preventDefault();
+  const password = $("#newPassword").value;
+  if (password.length < 12) {
+    return showMessage($("#recoveryMessage"), "رمز عبور جدید باید حداقل ۱۲ نویسه باشد.", true);
+  }
+  const button = $("#saveNewPassword");
+  button.disabled = true;
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    $("#recoveryDialog").close();
+    $("#recoveryForm").reset();
+    toast("رمز عبور با موفقیت تغییر کرد.");
+  } catch (error) {
+    showMessage($("#recoveryMessage"), friendlyAuthError(error), true);
+  } finally {
+    button.disabled = false;
+  }
+}
+function handleAuthCallbackError() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  const code = params.get("error_code");
+  if (!code) return;
+  const description = params.get("error_description") || "";
+  history.replaceState(null, document.title, window.location.pathname + window.location.search);
+  setAuthMode("login");
+  $("#authDialog").showModal();
+  showMessage($("#authMessage"), description.includes("expired")
+    ? "لینک تأیید منقضی شده؛ ایمیل تأیید تازه درخواست کن."
+    : "تأیید ایمیل انجام نشد. لینک تازه درخواست کن و آدرس سایت را بررسی کن.", true);
+  $("#resendConfirmationButton").hidden = false;
 }
 async function toggleBookmark(bookId) {
   if (!state.session) {
@@ -437,6 +547,9 @@ function bindEvents() {
   $("#myLibraryButton").addEventListener("click", openMyLibrary);
   $("#adminButton").addEventListener("click", openAdminPanel);
   $("#authForm").addEventListener("submit", submitAuth);
+  $("#resendConfirmationButton").addEventListener("click", resendSignupConfirmation);
+  $("#forgotPasswordButton").addEventListener("click", requestPasswordReset);
+  $("#recoveryForm").addEventListener("submit", submitNewPassword);
   document.querySelectorAll(".auth-tab").forEach((tab) => tab.addEventListener("click", () => setAuthMode(tab.dataset.mode)));
   $("#signOutButton").addEventListener("click", async () => {
     const { error } = await supabase.auth.signOut();
@@ -469,13 +582,18 @@ async function init() {
     await loadBooks();
     return;
   }
-  const { data: { session } } = await supabase.auth.getSession();
-  state.session = session;
-  await Promise.all([loadBooks(), loadProfile()]);
-  supabase.auth.onAuthStateChange((_event, session) => {
+  handleAuthCallbackError();
+  supabase.auth.onAuthStateChange((event, session) => {
     state.session = session;
+    if (event === "PASSWORD_RECOVERY") {
+      $("#recoveryDialog").showModal();
+    }
     window.setTimeout(() => loadProfile(), 0);
   });
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  state.session = session;
+  await Promise.all([loadBooks(), loadProfile()]);
 }
 init().catch((error) => {
   console.error("FreeBook initialization failed:", error);
