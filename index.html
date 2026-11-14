@@ -69,11 +69,27 @@
     <form id="authForm" class="stack-form">
       <label id="nameField" hidden>نام نمایشی<input id="displayName" name="displayName" maxlength="60" autocomplete="nickname"></label>
       <label>ایمیل<input id="email" name="email" type="email" required autocomplete="email" placeholder="name@example.com"></label>
-      <label>رمز عبور<input id="password" name="password" type="password" required minlength="8" autocomplete="current-password" placeholder="حداقل ۸ نویسه"></label>
+      <label>رمز عبور<input id="password" name="password" type="password" required minlength="1" maxlength="128" autocomplete="current-password" placeholder="حداقل ۱۲ نویسه برای حساب جدید"></label>
       <button class="button button-primary button-wide" id="authSubmit" type="submit">ورود</button>
+      <div class="auth-secondary-actions">
+        <button class="text-action" id="forgotPasswordButton" type="button">رمز عبورم را فراموش کرده‌ام</button>
+        <button class="text-action" id="resendConfirmationButton" type="button" hidden>ارسال دوباره ایمیل تأیید</button>
+      </div>
       <p class="form-message" id="authMessage" role="status" aria-live="polite"></p>
     </form>
-    <p class="fine-print">با ساخت حساب، فقط اطلاعات لازم برای حساب و کتابخانه شخصی ذخیره می‌شود.</p>
+    <p class="fine-print">برای محافظت از حساب، تأیید ایمیل لازم است. رمز عبور حداقل ۱۲ نویسه‌ای انتخاب کن و آن را در سایت دیگری استفاده نکن.</p>
+  </div>
+</dialog>
+
+<dialog class="dialog" id="recoveryDialog" aria-labelledby="recoveryTitle">
+  <form method="dialog" class="dialog-top"><span class="eyebrow">امنیت حساب</span><button class="icon-button" aria-label="بستن" value="cancel">×</button></form>
+  <div class="dialog-content">
+    <h2 id="recoveryTitle">انتخاب رمز عبور جدید</h2>
+    <form id="recoveryForm" class="stack-form">
+      <label>رمز عبور جدید<input id="newPassword" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></label>
+      <button class="button button-primary button-wide" id="saveNewPassword" type="submit">ذخیره رمز جدید</button>
+      <p class="form-message" id="recoveryMessage" role="status" aria-live="polite"></p>
+    </form>
   </div>
 </dialog>
 
