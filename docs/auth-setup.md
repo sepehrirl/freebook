@@ -12,8 +12,8 @@ Complete these steps for the production Supabase project:
 4. Open **Authentication → Sign In / Providers → Email** and keep email confirmations enabled.
 5. Keep the standard confirmation email link based on Supabase's `{{ .ConfirmationURL }}`. If a custom template is used, ensure it respects the redirect supplied by the app (Supabase exposes `{{ .RedirectTo }}`); do not hard-code an old or localhost URL.
 6. Open **Authentication → SMTP Settings** and configure a verified sender with a production SMTP provider. The built-in Supabase email service is intended for testing, has strict sending limits, and is not suitable for reliable production delivery. Verify the sender domain and SPF/DKIM records with the provider.
-7. Open **Authentication → Attack Protection**. Enable CAPTCHA if appropriate for the public signup form, review email/OTP rate limits, and keep abuse protections enabled.
-8. In password settings, set a minimum length of at least 12 characters. Enable leaked-password protection if the project plan supports it. Require MFA for administrator accounts and protect the administrator email account.
+7. Open **Authentication → Attack Protection** and review email/OTP rate limits. CAPTCHA is not yet wired into this frontend; only enable a CAPTCHA challenge after its token is integrated into signup and sign-in requests.
+8. In password settings, use a minimum length of at least 12 characters for new accounts. Before enforcing a stronger server-side minimum, test existing accounts and provide a password-reset path so older passwords are not unexpectedly rejected. Enable leaked-password protection if the project plan supports it. Require MFA for administrator accounts and protect the administrator email account.
 
 ## User flows
 
