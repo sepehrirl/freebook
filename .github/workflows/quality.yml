@@ -28,6 +28,8 @@ jobs:
           test -s supabase/migrations/20261110184223_phase3_storage_reader_progress.sql
           test -s supabase/migrations/20261110201500_phase4_automated_ingestion.sql
           test -s supabase/migrations/20261110203000_phase4_ingestion_security_cleanup.sql
+          test -s supabase/migrations/20261114143000_phase4_rights_evidence.sql
+          test -s scripts/validate-ingestion-manifest.mjs
           test -s catalog/manifest.json
           test -s supabase/functions/ingest-books/index.ts
           grep -q 'id="adminDialog"' index.html
@@ -39,3 +41,4 @@ jobs:
           grep -q 'id="ingestionRuns"' index.html
           grep -q 'id="pdfCanvas"' app.js
           grep -q 'CC-BY-SA-4.0' supabase/functions/ingest-books/index.ts
+          node scripts/validate-ingestion-manifest.mjs
