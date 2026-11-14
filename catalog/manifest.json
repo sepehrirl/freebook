@@ -128,18 +128,18 @@
       "attribution": "Pat Morin, Open Data Structures, Java Edition. Licensed under Creative Commons Attribution 2.5 Canada. Preserve the original attribution and license notice."
     },
     {
-      "external_id": "college-physics-ap-courses-2e",
-      "title": "College Physics for AP Courses 2e",
-      "author": "Paul Peter Urone; Roger Hinrichs; Kim Dirks",
-      "description": "A physics textbook designed for AP-level study, with conceptual explanations and practical applications.",
+      "external_id": "modern-physics-crowell-2021",
+      "title": "Modern Physics: With Waves, Thermodynamics, and Optics",
+      "author": "Benjamin Crowell",
+      "description": "A sophomore-level calculus-based physics textbook focused on waves, quantum physics, relativity, thermodynamics, and optics.",
       "category": "Physics",
       "language": "en",
-      "content_url": "https://assets.openstax.org/oscms-prodcms/media/documents/college-physics-ap-courses-2e_-_WEB.pdf",
-      "source_url": "https://openstax.org/details/books/college-physics-ap-courses",
-      "rights_evidence_url": "https://assets.openstax.org/oscms-prodcms/media/documents/college-physics-ap-courses-2e_-_WEB.pdf",
-      "license_code": "CC-BY-4.0",
+      "content_url": "https://ia801801.us.archive.org/4/items/mod_20220102/mod.pdf",
+      "source_url": "https://archive.org/details/mod_20220102",
+      "rights_evidence_url": "https://archive.org/metadata/mod_20220102",
+      "license_code": "CC-BY-SA-4.0",
       "rights_verified": true,
-      "attribution": "Paul Peter Urone, Roger Hinrichs, and contributing authors, College Physics for AP Courses 2e, OpenStax, Rice University. Licensed CC BY 4.0. Retain the original PDF attribution and figure credits."
+      "attribution": "Benjamin Crowell, Modern Physics: With Waves, Thermodynamics, and Optics, 2021. Licensed CC BY-SA 4.0 as recorded in Internet Archive metadata. Preserve the original attribution and all figure credits."
     },
     {
       "external_id": "electromagnetics-volume-1-ellingson",
